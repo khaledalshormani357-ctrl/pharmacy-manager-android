@@ -1,0 +1,30 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:15
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: pharmacy
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/pharmacy?schema=public
+      JWT_SECRET: change_me
+      PORT: 4000
+    depends_on:
+      - db
+    ports:
+      - '4000:4000'
+
+volumes:
+  db-data:
