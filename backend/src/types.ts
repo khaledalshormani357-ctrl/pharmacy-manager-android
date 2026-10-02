@@ -39,6 +39,9 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
+  // Optional password field for seeded/development users or stored credentials.
+  // Keep it optional so the public `User` shape can omit credentials where not needed.
+  password?: string;
 }
 
 export interface DashboardSummary {
