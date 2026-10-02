@@ -2,8 +2,11 @@ export type Product = {
   id: string;
   name: string;
   category: string;
+  barcode?: string;
   stock: number;
   unitPrice: number;
+  costPrice?: number;
+  status?: 'active' | 'low-stock' | 'expired';
 };
 
 export type Sale = {
