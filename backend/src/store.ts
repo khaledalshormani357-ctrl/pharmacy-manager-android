@@ -99,9 +99,9 @@ export const prescriptions: Prescription[] = [
 ];
 
 export const users: User[] = [
-  { id: 'user-1', name: 'Admin User', email: 'admin@pharmacy.test', role: 'admin' },
-  { id: 'user-2', name: 'Pharmacist 1', email: 'pharmacist@pharmacy.test', role: 'pharmacist' },
-  { id: 'user-3', name: 'Cashier 1', email: 'cashier@pharmacy.test', role: 'cashier' },
+  { id: 'user-1', name: 'Admin User', email: 'admin@pharmacy.test', role: 'admin', password: 'admin123' },
+  { id: 'user-2', name: 'Pharmacist 1', email: 'pharmacist@pharmacy.test', role: 'pharmacist', password: 'pharm123' },
+  { id: 'user-3', name: 'Cashier 1', email: 'cashier@pharmacy.test', role: 'cashier', password: 'cash123' },
 ];
 
 export function getDashboardSummary(): DashboardSummary {
