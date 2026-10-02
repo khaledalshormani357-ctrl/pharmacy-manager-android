@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import { signToken, authenticateToken } from './auth.js';
 import { prisma } from './db.js';
 import { seed } from './seed.js';
+import { normalizeParam } from './utils.js';
 
 const app = express();
 const PORT = Number(process.env.PORT || 4000);
@@ -68,7 +69,13 @@ app.get('/api/products', async (_req: Request, res: Response) => {
 });
 
 app.get('/api/products/:id', async (req: Request, res: Response) => {
-  const product = await prisma.product.findUnique({ where: { id: req.params.id } });
+  const productId = normalizeParam(req, 'id');
+
+  if (!productId) {
+    return res.status(400).json({ message: 'id is required' });
+  }
+
+  const product = await prisma.product.findUnique({ where: { id: productId } });
   if (!product) return res.status(404).json({ message: 'Product not found' });
   return res.json(product);
 });
@@ -102,7 +109,11 @@ app.post('/api/products', authenticateToken, async (req: Request, res: Response)
 
 app.put('/api/products/:id', authenticateToken, async (req: Request, res: Response) => {
   const { name, category, barcode, stock, unitPrice, costPrice, expiryDate } = req.body;
-  const productId = req.params.id;
+  const productId = normalizeParam(req, 'id');
+
+  if (!productId) {
+    return res.status(400).json({ message: 'id is required' });
+  }
 
   const existing = await prisma.product.findUnique({ where: { id: productId } });
   if (!existing) {
@@ -128,12 +139,18 @@ app.put('/api/products/:id', authenticateToken, async (req: Request, res: Respon
 });
 
 app.delete('/api/products/:id', authenticateToken, async (req: Request, res: Response) => {
-  const product = await prisma.product.findUnique({ where: { id: req.params.id } });
+  const productId = normalizeParam(req, 'id');
+
+  if (!productId) {
+    return res.status(400).json({ message: 'id is required' });
+  }
+
+  const product = await prisma.product.findUnique({ where: { id: productId } });
   if (!product) {
     return res.status(404).json({ message: 'Product not found' });
   }
 
-  await prisma.product.delete({ where: { id: req.params.id } });
+  await prisma.product.delete({ where: { id: productId } });
   return res.json({ message: 'Product deleted successfully' });
 });
 
@@ -201,13 +218,19 @@ app.patch('/api/prescriptions/:id/status', authenticateToken, async (req: Reques
     return res.status(400).json({ message: 'Valid status is required: pending, approved, dispensed' });
   }
 
-  const existing = await prisma.prescription.findUnique({ where: { id: req.params.id } });
+  const prescriptionId = normalizeParam(req, 'id');
+
+  if (!prescriptionId) {
+    return res.status(400).json({ message: 'id is required' });
+  }
+
+  const existing = await prisma.prescription.findUnique({ where: { id: prescriptionId } });
   if (!existing) {
     return res.status(404).json({ message: 'Prescription not found' });
   }
 
   const prescription = await prisma.prescription.update({
-    where: { id: req.params.id },
+    where: { id: prescriptionId },
     data: { status },
   });
 
@@ -215,7 +238,9 @@ app.patch('/api/prescriptions/:id/status', authenticateToken, async (req: Reques
 });
 
 app.get('/api/users', authenticateToken, async (_req: Request, res: Response) => {
-  const users = await prisma.user.findMany({ select: { id: true, name: true, email: true, role: true, createdAt: true } });
+  const users = await prisma.user.findMany({
+    select: { id: true, name: true, email: true, role: true, createdAt: true },
+  });
   res.json(users);
 });
 
