@@ -1,0 +1,16 @@
+{
+  "name": "pharmacy-manager-android",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "mobile"
+  ],
+  "scripts": {
+    "backend": "npm --workspace backend run dev",
+    "mobile": "npm --workspace mobile run start",
+    "dev": "concurrently \"npm run backend\" \"npm run mobile\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.1"
+  }
+}
