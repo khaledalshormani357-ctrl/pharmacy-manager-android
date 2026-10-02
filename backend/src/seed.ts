@@ -1,4 +1,5 @@
 import bcrypt from 'bcryptjs';
+import { Prisma } from '@prisma/client';
 import { prisma } from './db.js';
 
 export async function seed() {
@@ -9,12 +10,14 @@ export async function seed() {
   const pharmPassword = await bcrypt.hash('pharm123', 10);
   const cashPassword = await bcrypt.hash('cash123', 10);
 
+  const users: Prisma.UserCreateInput[] = [
+    { name: 'Admin User', email: 'admin@pharmacy.test', password: adminPassword, role: 'admin' },
+    { name: 'Pharmacist 1', email: 'pharmacist@pharmacy.test', password: pharmPassword, role: 'pharmacist' },
+    { name: 'Cashier 1', email: 'cashier@pharmacy.test', password: cashPassword, role: 'cashier' },
+  ];
+
   await prisma.user.createMany({
-    data: [
-      { name: 'Admin User', email: 'admin@pharmacy.test', password: adminPassword, role: 'admin' },
-      { name: 'Pharmacist 1', email: 'pharmacist@pharmacy.test', password: pharmPassword, role: 'pharmacist' },
-      { name: 'Cashier 1', email: 'cashier@pharmacy.test', password: cashPassword, role: 'cashier' },
-    ],
+    data: users,
   });
 
   await prisma.product.createMany({
