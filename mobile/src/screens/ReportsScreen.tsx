@@ -7,39 +7,70 @@ import {
   View,
   TouchableOpacity,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../App';
 import { theme } from '../theme';
-import type { Product } from '../types';
 
-type NavProp = NativeStackNavigationProp<RootStackParamList, 'Products'>;
+type Prescription = {
+  id: string;
+  patientName: string;
+  doctorName: string;
+  medicationName: string;
+  status: 'pending' | 'approved' | 'dispensed';
+  quantity: number;
+};
 
-export default function ProductsScreen() {
+type NavProp = NativeStackNavigationProp<RootStackParamList, 'Prescriptions'>;
+
+export default function PrescriptionsScreen() {
   const navigation = useNavigation<NavProp>();
-  const [products, setProducts] = useState<Product[]>([]);
+  const [items, setItems] = useState<Prescription[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const loadProducts = async () => {
+  const load = async () => {
     try {
       const token = await AsyncStorage.getItem('authToken');
-      const res = await fetch('http://10.0.2.2:4000/api/products', {
+      const res = await fetch('http://10.0.2.2:4000/api/prescriptions', {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
+      if (!res.ok) throw new Error('Unable to load prescriptions');
       const data = await res.json();
-      if (res.ok) setProducts(data);
-    } catch (err) {
-      console.log('Failed to load products', err);
+      setItems(data);
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'Failed to load prescriptions');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadProducts();
+    load();
   }, []);
+
+  const updateStatus = async (id: string, status: 'pending' | 'approved' | 'dispensed') => {
+    try {
+      const token = await AsyncStorage.getItem('authToken');
+      const res = await fetch(`http://10.0.2.2:4000/api/prescriptions/${id}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ status }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || 'Status update failed');
+      }
+      await load();
+    } catch (err: any) {
+      Alert.alert('Update failed', err.message || 'Unknown error');
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -47,7 +78,7 @@ export default function ProductsScreen() {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={styles.backText}>Back</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Inventory</Text>
+        <Text style={styles.title}>Prescriptions</Text>
         <View style={{ width: 48 }} />
       </View>
 
@@ -57,15 +88,30 @@ export default function ProductsScreen() {
         </View>
       ) : (
         <ScrollView contentContainerStyle={styles.container}>
-          {products.map((product) => (
-            <View key={product.id} style={styles.card}>
-              <View style={styles.cardRow}>
-                <Text style={styles.productName}>{product.name}</Text>
-                <Text style={[styles.stockBadge, product.stock < 10 && styles.stockBadgeWarning]}>{product.stock} left</Text>
+          {items.map((item) => (
+            <View key={item.id} style={styles.card}>
+              <Text style={styles.patient}>{item.patientName}</Text>
+              <Text style={styles.meta}>Doctor: {item.doctorName}</Text>
+              <Text style={styles.meta}>Medication: {item.medicationName}</Text>
+              <Text style={styles.meta}>Qty: {item.quantity}</Text>
+
+              <View style={styles.statusRow}>
+                <Text style={styles.badge}>{item.status}</Text>
+                <View style={styles.actionRow}>
+                  {['pending', 'approved', 'dispensed'].map((opt) => (
+                    <TouchableOpacity
+                      key={opt}
+                      style={[
+                        styles.statusButton,
+                        item.status === opt && styles.statusButtonActive,
+                      ]}
+                      onPress={() => updateStatus(item.id, opt as 'pending' | 'approved' | 'dispensed')}
+                    >
+                      <Text style={styles.statusText}>{opt}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
               </View>
-              <Text style={styles.meta}>{product.category}</Text>
-              <Text style={styles.meta}>Barcode: {product.barcode || 'N/A'}</Text>
-              <Text style={styles.meta}>Unit Price: ${product.unitPrice.toFixed(2)}</Text>
             </View>
           ))}
         </ScrollView>
@@ -92,25 +138,39 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 14,
     marginBottom: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
   },
-  cardRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  productName: { fontSize: 16, fontWeight: '700' },
-  stockBadge: {
-    backgroundColor: '#eaf2ff',
+  patient: { fontSize: 17, fontWeight: '800' },
+  meta: { color: '#69758c', marginTop: 4 },
+  statusRow: { marginTop: 12 },
+  badge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#edf6ff',
     color: theme.primary,
     paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingVertical: 5,
     borderRadius: 999,
     fontWeight: '700',
     overflow: 'hidden',
   },
-  stockBadgeWarning: {
-    backgroundColor: '#fff1d6',
-    color: '#b7791f',
+  actionRow: {
+    flexDirection: 'row',
+    marginTop: 10,
+    flexWrap: 'wrap',
   },
-  meta: { color: '#69758c', marginTop: 6 },
+  statusButton: {
+    backgroundColor: '#eef2f7',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  statusButtonActive: {
+    backgroundColor: theme.primary,
+  },
+  statusText: {
+    color: '#111827',
+    textTransform: 'capitalize',
+    fontWeight: '700',
+  },
 });

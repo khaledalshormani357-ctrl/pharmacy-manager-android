@@ -98,7 +98,7 @@ export default function DashboardScreen() {
           </View>
           <View style={styles.card}>
             <Text style={styles.cardLabel}>Revenue</Text>
-            <Text style={styles.cardValue}>${summary.revenueToday.toFixed(2)}</Text>
+            <Text style={styles.cardValue}>${Number(summary.revenueToday).toFixed(2)}</Text>
           </View>
         </View>
 
@@ -143,7 +143,7 @@ export default function DashboardScreen() {
                 <Text style={styles.listItemTitle}>{item.name}</Text>
                 <Text style={styles.listItemMeta}>{item.category}</Text>
               </View>
-              <Text style={styles.price}>${item.unitPrice.toFixed(2)}</Text>
+              <Text style={styles.price}>${Number(item.unitPrice).toFixed(2)}</Text>
             </View>
           ))}
         </View>
@@ -156,7 +156,7 @@ export default function DashboardScreen() {
                 <Text style={styles.listItemTitle}>{sale.productName}</Text>
                 <Text style={styles.listItemMeta}>{sale.cashier}</Text>
               </View>
-              <Text style={styles.price}>${sale.total.toFixed(2)}</Text>
+              <Text style={styles.price}>${Number(sale.total).toFixed(2)}</Text>
             </View>
           ))}
         </View>
